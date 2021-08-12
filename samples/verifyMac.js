@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,19 +15,25 @@
 'use strict';
 
 async function main(
-  projectId = 'my-project',
+  projectId = 'your-project-id',
   locationId = 'us-east1',
   keyRingId = 'my-key-ring',
-  id = 'my-hsm-encryption-key'
+  keyId = 'my-key',
+  versionId = '123',
+  data = Buffer.from('...'),
+  signature = Buffer.from('...')
 ) {
-  // [START kms_create_key_hsm]
+  // [START kms_verify_mac]
   //
   // TODO(developer): Uncomment these variables before running the sample.
   //
-  // const projectId = 'my-project';
+  // const projectId = 'your-project-id';
   // const locationId = 'us-east1';
   // const keyRingId = 'my-key-ring';
-  // const id = 'my-hsm-encryption-key';
+  // const keyId = 'my-key';
+  // const versionId = '123';
+  // const data = Buffer.from('...');
+  // const signature = Buffer.from('...');
 
   // Imports the Cloud KMS library
   const {KeyManagementServiceClient} = require('@google-cloud/kms');
@@ -35,32 +41,29 @@ async function main(
   // Instantiates a client
   const client = new KeyManagementServiceClient();
 
-  // Build the parent key ring name
-  const keyRingName = client.keyRingPath(projectId, locationId, keyRingId);
+  // Build the version name
+  const versionName = client.cryptoKeyVersionPath(
+    projectId,
+    locationId,
+    keyRingId,
+    keyId,
+    versionId
+  );
 
-  async function createKeyHsm() {
-    const [key] = await client.createCryptoKey({
-      parent: keyRingName,
-      cryptoKeyId: id,
-      cryptoKey: {
-        purpose: 'ENCRYPT_DECRYPT',
-        versionTemplate: {
-          algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
-          protectionLevel: 'HSM',
-        },
-
-        // Optional: customize how long key versions should be kept before
-        // destroying.
-        destroyScheduledDuration: {seconds: 60 * 60 * 24},
-      },
+  async function verifyMac() {
+    // Verify the data with Cloud KMS
+    const [verifyResponse] = await client.macVerify({
+      name: versionName,
+      data: data,
+      mac: signature,
     });
 
-    console.log(`Created hsm key: ${key.name}`);
-    return key;
+    console.log(`Verified: ${verifyResponse.success}`);
+    return verifyResponse;
   }
 
-  return createKeyHsm();
-  // [END kms_create_key_hsm]
+  return verifyMac();
+  // [END kms_verify_mac]
 }
 module.exports.main = main;
 

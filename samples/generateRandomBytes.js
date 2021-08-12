@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,17 +17,15 @@
 async function main(
   projectId = 'my-project',
   locationId = 'us-east1',
-  keyRingId = 'my-key-ring',
-  id = 'my-hsm-encryption-key'
+  numBytes = 256
 ) {
-  // [START kms_create_key_hsm]
+  // [START kms_generate_random_bytes]
   //
   // TODO(developer): Uncomment these variables before running the sample.
   //
   // const projectId = 'my-project';
   // const locationId = 'us-east1';
-  // const keyRingId = 'my-key-ring';
-  // const id = 'my-hsm-encryption-key';
+  // const numBytes = 256;
 
   // Imports the Cloud KMS library
   const {KeyManagementServiceClient} = require('@google-cloud/kms');
@@ -35,32 +33,22 @@ async function main(
   // Instantiates a client
   const client = new KeyManagementServiceClient();
 
-  // Build the parent key ring name
-  const keyRingName = client.keyRingPath(projectId, locationId, keyRingId);
+  // Build the location name
+  const locationName = client.locationPath(projectId, locationId);
 
-  async function createKeyHsm() {
-    const [key] = await client.createCryptoKey({
-      parent: keyRingName,
-      cryptoKeyId: id,
-      cryptoKey: {
-        purpose: 'ENCRYPT_DECRYPT',
-        versionTemplate: {
-          algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
-          protectionLevel: 'HSM',
-        },
-
-        // Optional: customize how long key versions should be kept before
-        // destroying.
-        destroyScheduledDuration: {seconds: 60 * 60 * 24},
-      },
+  async function generateRandomBytes() {
+    const [randomBytesResponse] = await client.generateRandomBytes({
+      location: locationName,
+      lengthBytes: numBytes,
+      protectionLevel: 'HSM',
     });
 
-    console.log(`Created hsm key: ${key.name}`);
-    return key;
+    console.log(`Random bytes: ${randomBytesResponse.data.toString('base64')}`);
+    return randomBytesResponse;
   }
 
-  return createKeyHsm();
-  // [END kms_create_key_hsm]
+  return generateRandomBytes();
+  // [END kms_generate_random_bytes]
 }
 module.exports.main = main;
 

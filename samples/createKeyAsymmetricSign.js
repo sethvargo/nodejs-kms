@@ -47,6 +47,10 @@ async function main(
         versionTemplate: {
           algorithm: 'RSA_SIGN_PKCS1_2048_SHA256',
         },
+
+        // Optional: customize how long key versions should be kept before
+        // destroying.
+        destroyScheduledDuration: {seconds: 60 * 60 * 24},
       },
     });
 

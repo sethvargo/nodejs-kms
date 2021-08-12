@@ -31,6 +31,7 @@ async function main(
 
   // Imports the Cloud KMS library
   const {KeyManagementServiceClient} = require('@google-cloud/kms');
+  const {google} = require('@google-cloud/kms');
 
   // Instantiates a client
   const client = new KeyManagementServiceClient();
@@ -47,6 +48,10 @@ async function main(
         versionTemplate: {
           algorithm: 'RSA_DECRYPT_OAEP_2048_SHA256',
         },
+
+        // Optional: customize how long key versions should be kept before
+        // destroying.
+        destroyScheduledDuration: {seconds: 60 * 60 * 24},
       },
     });
 

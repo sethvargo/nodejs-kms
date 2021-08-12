@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,19 +15,23 @@
 'use strict';
 
 async function main(
-  projectId = 'my-project',
+  projectId = 'your-project-id',
   locationId = 'us-east1',
   keyRingId = 'my-key-ring',
-  id = 'my-hsm-encryption-key'
+  keyId = 'my-key',
+  versionId = '123',
+  data = Buffer.from('...')
 ) {
-  // [START kms_create_key_hsm]
+  // [START kms_sign_mac]
   //
   // TODO(developer): Uncomment these variables before running the sample.
   //
-  // const projectId = 'my-project';
+  // const projectId = 'your-project-id';
   // const locationId = 'us-east1';
   // const keyRingId = 'my-key-ring';
-  // const id = 'my-hsm-encryption-key';
+  // const keyId = 'my-key';
+  // const versionId = '123';
+  // const data = Buffer.from('...');
 
   // Imports the Cloud KMS library
   const {KeyManagementServiceClient} = require('@google-cloud/kms');
@@ -35,32 +39,33 @@ async function main(
   // Instantiates a client
   const client = new KeyManagementServiceClient();
 
-  // Build the parent key ring name
-  const keyRingName = client.keyRingPath(projectId, locationId, keyRingId);
+  // Build the version name
+  const versionName = client.cryptoKeyVersionPath(
+    projectId,
+    locationId,
+    keyRingId,
+    keyId,
+    versionId
+  );
 
-  async function createKeyHsm() {
-    const [key] = await client.createCryptoKey({
-      parent: keyRingName,
-      cryptoKeyId: id,
-      cryptoKey: {
-        purpose: 'ENCRYPT_DECRYPT',
-        versionTemplate: {
-          algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
-          protectionLevel: 'HSM',
-        },
-
-        // Optional: customize how long key versions should be kept before
-        // destroying.
-        destroyScheduledDuration: {seconds: 60 * 60 * 24},
-      },
+  async function signMac() {
+    // Sign the data with Cloud KMS
+    const [signResponse] = await client.macSign({
+      name: versionName,
+      data: data,
     });
 
-    console.log(`Created hsm key: ${key.name}`);
-    return key;
+    // Example of how to display signature. Because the signature is in a binary
+    // format, you need to encode the output before printing it to a console or
+    // displaying it on a screen.
+    const encoded = signResponse.mac.toString('base64');
+    console.log(`Signature: ${encoded}`);
+
+    return signResponse;
   }
 
-  return createKeyHsm();
-  // [END kms_create_key_hsm]
+  return signMac();
+  // [END kms_sign_mac]
 }
 module.exports.main = main;
 

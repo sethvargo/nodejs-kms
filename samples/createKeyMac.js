@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@ async function main(
   projectId = 'my-project',
   locationId = 'us-east1',
   keyRingId = 'my-key-ring',
-  id = 'my-hsm-encryption-key'
+  id = 'my-mac-key'
 ) {
-  // [START kms_create_key_hsm]
+  // [START kms_create_key_mac]
   //
   // TODO(developer): Uncomment these variables before running the sample.
   //
   // const projectId = 'my-project';
   // const locationId = 'us-east1';
   // const keyRingId = 'my-key-ring';
-  // const id = 'my-hsm-encryption-key';
+  // const id = 'my-mac-key';
 
   // Imports the Cloud KMS library
   const {KeyManagementServiceClient} = require('@google-cloud/kms');
@@ -38,15 +38,14 @@ async function main(
   // Build the parent key ring name
   const keyRingName = client.keyRingPath(projectId, locationId, keyRingId);
 
-  async function createKeyHsm() {
+  async function createKeyMac() {
     const [key] = await client.createCryptoKey({
       parent: keyRingName,
       cryptoKeyId: id,
       cryptoKey: {
-        purpose: 'ENCRYPT_DECRYPT',
+        purpose: 'MAC',
         versionTemplate: {
-          algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
-          protectionLevel: 'HSM',
+          algorithm: 'HMAC_SHA256',
         },
 
         // Optional: customize how long key versions should be kept before
@@ -55,12 +54,12 @@ async function main(
       },
     });
 
-    console.log(`Created hsm key: ${key.name}`);
+    console.log(`Created mac key: ${key.name}`);
     return key;
   }
 
-  return createKeyHsm();
-  // [END kms_create_key_hsm]
+  return createKeyMac();
+  // [END kms_create_key_mac]
 }
 module.exports.main = main;
 
